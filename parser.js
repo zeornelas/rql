@@ -2,7 +2,7 @@
  * This module provides RQL parsing. For example:
  * var parsed = require("./parser").parse("b=3&le(c,5)");
  */
-if (typeof define !== 'function') { var define = require('amdefine')(module) }
+if (typeof define !== 'function') { define = require('amdefine')(module); }
 define(["exports", "./util/contains"], function(exports, contains){
 
 var operatorMap = {
