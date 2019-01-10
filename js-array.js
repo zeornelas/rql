@@ -3,7 +3,7 @@
  * require("./js-array").query("a=3", {}, [{a:1},{a:3}]) -> [{a:3}]
  *
  */
-if (typeof define !== 'function') { var define = require('amdefine')(module) }
+if (typeof define !== 'function') { define = require('amdefine')(module); }
 define(["exports", "./parser", "./query", "./util/each", "./util/contains"], function(exports, parser, QUERY, each, contains){
 //({define:typeof define!="undefined"?define:function(deps, factory){module.exports = factory(exports, require("./parser"));}}).
 //define(["exports", "./parser"], function(exports, parser){
