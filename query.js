@@ -9,7 +9,7 @@
  *	 // for each object that matches the query
  * });
  */
-if (typeof define !== 'function') { var define = require('amdefine')(module) }
+if (typeof define !== 'function') { define = require('amdefine')(module); }
 define(["exports", "./parser", "./util/each"], function(exports, parser, each){
 
 var parseQuery = parser.parseQuery;
