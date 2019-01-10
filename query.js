@@ -9,9 +9,7 @@
  *	 // for each object that matches the query
  * });
  */
-//({define:typeof define!="undefined"?define:function(deps, factory){module.exports = factory(exports, require("./parser"), require("./js-array"));}}).
-//define(["exports", "./parser", "./js-array"], function(exports, parser, jsarray){
-({define:typeof define!="undefined"?define:function(deps, factory){module.exports = factory(exports, require("./parser"), require("./util/each"));}}).
+if (typeof define !== 'function') { var define = require('amdefine')(module) }
 define(["exports", "./parser", "./util/each"], function(exports, parser, each){
 
 var parseQuery = parser.parseQuery;
@@ -78,33 +76,56 @@ function encodeString(s) {
 		return s;
 }
 
+/**
+ * Encode a value of a part's argument for use in an RQL string.
+ * @param {*} val - The value to encode.
+ * @returns {string} The encoded value, URI-safe.
+ */
 exports.encodeValue = function(val) {
-		var encoded;
-		if (val === null) val = 'null';
-		if (val !== parser.converters["default"]('' + (
-				val.toISOString && val.toISOString() || val.toString()
-		))) {
-				var type = typeof val;
-				if(val instanceof RegExp){
-					// TODO: control whether to we want simpler glob() style
-					val = val.toString();
-					var i = val.lastIndexOf('/');
-					type = val.substring(i).indexOf('i') >= 0 ? "re" : "RE";
-					val = encodeString(val.substring(1, i));
-					encoded = true;
-				}
-				if(type === "object"){
-						type = "epoch";
-						val = val.getTime();
-						encoded = true;
-				}
-				if(type === "string") {
-						val = encodeString(val);
-						encoded = true;
-				}
-				val = [type, val].join(":");
+		// Remember whether any encoding took place. The function force-encodes
+		//  the value as a plain string at the end as a last resort.
+		var encoded = false;
+
+		// Try encoding the value. If it throws, go to our failsafe.
+		try {
+			// Check whether casting the value to a string and parsing it would
+			//  result in the input value (i.e. if the value can be left prefix-less).
+			var stringVal = '' + ((val && val.toISOString) ? val.toISOString() : val);
+			var parsedStringVal = parser.converters["default"](stringVal);
+			if (val === parsedStringVal) {
+				return encodeString(String(val));
+			}
+			// Now, only non-trivial cases are left:
+			var type = typeof val;
+			if (val instanceof RegExp) {
+				// TODO: control whether to we want simpler glob() style
+				val = val.toString();
+				var i = val.lastIndexOf('/');
+				type = val.substring(i).indexOf('i') >= 0 ? "re" : "RE";
+				val = encodeString(val.substring(1, i));
+				encoded = true;
+			}
+			if (type === "object") {
+				// Assume it's a date - it's the only other object type we support:
+				type = "epoch";
+				val = val.getTime();
+				encoded = true;
+			}
+			if (type === "string") {
+				// It's a string, but it doesn't parse to its own exact value.
+				// This happens when the input is a String('null') for example -
+				//  the auto-converter parses null to type null, so we need a prefix.
+				val = encodeString(val);
+				encoded = true;
+			}
+			val = [type, val].join(":");
+		} catch (conversionError) {
+			// The conversion necessity check has failed and we have not encoded the value. The next conditional block will take care of it.
 		}
-		if (!encoded && typeof val === "string") val = encodeString(val);
+		if (!encoded && typeof val === "string") {
+			val = encodeString(val);
+		}
+		val = String(val);
 		return val;
 };
 
